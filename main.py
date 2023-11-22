@@ -1,8 +1,6 @@
 from fastapi import FastAPI
 import uvicorn
 from routers import generation
-
-from routers import generation
 from domain.accounts import accounts_router
 
 """

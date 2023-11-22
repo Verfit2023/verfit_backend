@@ -16,7 +16,6 @@ class OAuth2PasswordRequestFormWithEmail(OAuth2PasswordRequestForm):
     email: str  # 기본적으로 username과 password 필드만 제공하므로, 이메일 필드 추가
 
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
-
 #openssl rand -hex 32로 생성, 프로덕션 환경으로 이동하기 전에 secret_key 바꿀 예정, 그땐 git에 업로드 x
 SECRET_KEY = "26dd12faef256d92eb89f24341fb01c591d0a9b563e6e5ce4e2e48d052a4f64a"
 ALGORITHM = "HS256"
