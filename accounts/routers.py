@@ -6,7 +6,7 @@ from datetime import datetime
 from starlette.requests import Request
 from starlette.status import HTTP_401_UNAUTHORIZED
 
-router = APIRouter(prefix="/accounts")
+router = APIRouter(prefix="/accounts", tags=['accounts'])
 
 
 @router.post("/signup", response_model=schemas.User)
@@ -25,8 +25,9 @@ async def admin_signup(admin: schemas.Admin):
 async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequestForm = Depends()):
     try:
         user = await dependencies.authenticate_accounts(form_data.username, form_data.password, is_admin=False)
-        access_token = create_access_token(data={"sub": user["useremail"]})
+        access_token = create_access_token(data={"sub": user["useremail"], "scope": "user"})
         request.session['token'] = access_token
+        request.session['user_email'] =user["useremail"]
         return {
             "message": "User logged in successfully",
             "access_token": access_token,
@@ -41,8 +42,9 @@ async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequ
 async def adminLogin_for_access_token(request: Request, form_data: OAuth2PasswordRequestForm = Depends()):
     try:
         admin = await dependencies.authenticate_accounts(form_data.username, form_data.password, is_admin= True)
-        access_token = create_access_token(data={"sub": admin["adminemail"]})
+        access_token = create_access_token(data={"sub": admin["adminemail"], "scope": "admin"})
         request.session['token'] = access_token
+        request.session['admin_email'] =admin["adminemail"]
         return {
             "message": "Admin logged in successfully",
             "access_token": access_token,
@@ -60,7 +62,8 @@ async def user_logout(request: Request):
         raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Not authenticated")
     payload = dependencies.decode_access_token(token)
     await crud.logout_user(dependencies.db, token_jti=payload["jti"], token_exp=datetime.fromtimestamp(payload["exp"]))
-    request.session.pop('token', None)  # 세션에서 토큰 제거
+    #request.session.pop('token', None)  # 세션에서 토큰 제거
+    request.session.pop('user_email', None)
     return {"message": "User logged out successfully"}
 
 @router.post("/admin/logout")

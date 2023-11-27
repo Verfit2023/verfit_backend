@@ -129,7 +129,7 @@ def save_summary(content: Text, workbook_id: int):
             return {"message": "요약본 저장 과정에서 오류가 발생하였습니다."}
         
 @router.post('/newworkbook', tags=['generation'])
-def create_new_workbook(title: str, subject: str, description: str, owner: Users):
+def create_new_workbook(title: str, subject: str, description: str, owner: User):
     workbook = {"workbook_id":get_total_num_of_workbooks()+1, "title":title, "subject":subject, "description":description, "created_at":datetime(), "rate":0, "problems":[], "summaries":[], "owner": owner, "comments":[], "pubpriv":0}
     added_or_not = create_workbook(workbook)
     if added_or_not:
