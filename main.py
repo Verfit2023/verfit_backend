@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from generation import generation
+from workbook import workbook
 import uvicorn
 
 app = FastAPI(
@@ -10,6 +11,7 @@ app = FastAPI(
 )
 
 app.include_router(generation.router)
+app.include_router(workbook.router)
 
 
 @app.get("/test")
