@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 import PyPDF2
 from openai import OpenAI
 from workbook.database import *
-from accounts.models import *
+from accounts.schemas import *
 from fastapi.responses import RedirectResponse
 from datetime import datetime
 

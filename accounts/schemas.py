@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field
-from typing import Optional
+from typing import List, Optional
 from datetime import datetime
 
 # User 모델
@@ -7,6 +7,8 @@ class User(BaseModel):
     username: Optional[str] = Field(default="익명이", description="User 닉네임")
     useremail: EmailStr = Field(..., description="User 고유 email")
     userpassword: str = Field(..., description="User 비밀번호")
+    made_workbook_id: List[int] = Field(description="자신이 생성한 문제집 list")
+    fav_workbook_id: List[int] = Field(description="즐겨찾기 한 문제집 list")
 
 class UserInDB(User):
     hashed_password: str
