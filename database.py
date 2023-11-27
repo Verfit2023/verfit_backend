@@ -1,22 +1,22 @@
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+#from pymongo import MongoClient
+from motor.motor_asyncio import AsyncIOMotorClient
 
-#sqlite3 데이터베이스의 파일을 의미하며 프로젝트 루트 디렉터리에 저장
-SQLALCHEMY_DATABASE_URL = "sqlite:///./Verfit.db" 
 
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
-)
+# MongoDB 서버 설정
+MONGO_SERVER = "mongodb://localhost:27017"
 
-#autocommit=False이므로, commit이 없으면 저장되지 않음.
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine) 
+# MongoDB 클라이언트 생성
+#client = MongoClient(MONGO_SERVER)
+client = AsyncIOMotorClient(MONGO_SERVER)
 
-Base = declarative_base()
+# MongoDB 데이터베이스 선택
+db = client.Verfit
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+# User 컬렉션에 대한 고유 인덱스 생성
+db.users.create_index("useremail", unique=True)
+
+# Admin 컬렉션에 대한 고유 인덱스 생성
+db.admins.create_index("adminemail", unique=True)
+
+db.token_blacklist.create_index("jti", unique=True)
+
