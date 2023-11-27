@@ -1,8 +1,13 @@
 from fastapi import FastAPI
-from routers import generation
+from generation import generation
 import uvicorn
 
-app = FastAPI()
+app = FastAPI(
+    title="My API",
+    description="API description",
+    version="0.1.0",
+    docs_url="/docs",
+)
 
 app.include_router(generation.router)
 
