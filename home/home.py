@@ -1,15 +1,14 @@
-from accounts.database import get_current_user
 from fastapi import APIRouter, HTTPException, UploadFile, Depends, HTTPException, status
 from pydantic import BaseModel
-import workbooks.database as database
-from workbooks.models import Workbook
-from accounts.models import Users
-from pymongo import MongoClient
+from fastapi.responses import FileResponse
+from fastapi import FastAPI, File, UploadFile, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
+from accounts.schemas import Token, User, UserInDB
 from dotenv import load_dotenv
 from typing import Optional
-import PyPDF2
 from fastapi.security import OAuth2PasswordBearer
 from datetime import datetime, timedelta
+from workbooks import database
 
 load_dotenv()
 
@@ -20,17 +19,20 @@ router = APIRouter(
     prefix="/home",
 )
 
-@router.get("/current-user", tags=['home'])
-def current_user(current_user: Users = Depends(get_current_user)):
-    return {"username": current_user.username}
+def get_current_user(token: str = Depends(oauth2_scheme)):
+    user = database.get_user_by_token(token)
+    if not user:
+        return None
+    return user
 
-
-# 화면 띄우기(문제집 조회)
 @router.get("", tags=['home'])
-def get_workbooks(limit: int):
+def get_workbooks(limit: int, current_user: UserInDB = Depends(get_current_user)):
     workbooks = database.get_workbooks(limit)
     if workbooks:
-        return workbooks
+        response = {"workbooks": workbooks}
+        if current_user:
+            response["usernmae"] = current_user.nickname
+        return response
     else:
         return {"message": "Workbook not found"}
 
