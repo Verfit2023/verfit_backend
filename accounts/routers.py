@@ -11,12 +11,16 @@ router = APIRouter(prefix="/accounts", tags=['accounts'])
 
 @router.post("/signup", response_model=schemas.User)
 async def signup(user: schemas.User):
+    if not user.password_match():
+        raise HTTPException(status_code=400, detail="Passwords do not match")
     if await crud.get_user_by_email(user.useremail):
         raise HTTPException(status_code=400, detail="Email already registered")
     return await crud.create_user(user)
 
 @router.post("/admin/signup", response_model=schemas.Admin)
 async def admin_signup(admin: schemas.Admin):
+    if not admin.password_match():
+        raise HTTPException(status_code=400, detail="Passwords do not match")
     if await crud.get_admin_by_email(admin.adminemail):
         raise HTTPException(status_code=400, detail="Email already registered")
     return await crud.create_admin(admin)
