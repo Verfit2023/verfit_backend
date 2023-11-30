@@ -7,6 +7,11 @@ from workbook.database import *
 from accounts.schemas import *
 from fastapi.responses import RedirectResponse
 from datetime import datetime
+import os
+import openai
+
+API_KEY= 'sk***'
+os.environ["OPENAI_API_KEY"] = API_KEY
 
 load_dotenv()
 
@@ -38,7 +43,7 @@ def upload_lecture_file(file: UploadFile):
 
 @router.post('/question', tags=['generation'])
 def make_question_and_answer(problemType: int, text: Text):
-    client = OpenAI()
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
     try:
         if problemType == 1:
@@ -99,7 +104,7 @@ def save_question(problemType: int, problem: Text, workbook_id: int):
     
 @router.post('/summary', tags=['generation'])
 def make_summary(text: Text):
-    client = OpenAI()
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
     try:
         response = client.chat.completions.create(
