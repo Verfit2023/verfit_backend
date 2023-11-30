@@ -8,7 +8,9 @@ from dotenv import load_dotenv
 from typing import Optional
 from fastapi.security import OAuth2PasswordBearer
 from datetime import datetime, timedelta
-from workbooks import database
+from accounts.dependencies import oauth2_scheme, get_current_user, get_token_from_session
+from workbook import database
+
 
 load_dotenv()
 
@@ -20,7 +22,7 @@ router = APIRouter(
 )
 
 def get_current_user(token: str = Depends(oauth2_scheme)):
-    user = database.get_user_by_token(token)
+    user = get_token_from_session(token)
     if not user:
         return None
     return user
