@@ -48,28 +48,28 @@ def make_question_and_answer(problemType: int, text: Text):
     try:
         if problemType == 1:
             response = client.chat.completions.create(
-                model="ft:babbage-002:verfit::8PV5wQQV",
+                model="gpt-3.5-turbo",
                 messages=[
                     {"role": "user", "content": "Lecture Content: ["+text.text+"] Problem Type: True or False"},
                 ]
             )
         elif problemType == 2:
             response = client.chat.completions.create(
-                model="ft:babbage-002:verfit::8PV5wQQV",
+                model="gpt-3.5-turbo",
                 messages=[
                     {"role": "user", "content": "Lecture Content: ["+text.text+"] Problem Type: Fill in the Blank"},
                 ]
             )
         elif problemType == 3:
             response = client.chat.completions.create(
-                model="ft:babbage-002:verfit::8PV5wQQV",
+                model="gpt-3.5-turbo",
                 messages=[
                     {"role": "user", "content": "Lecture Content: ["+text.text+"] Problem Type: Short Answer"},
                 ]
             )
         else:
             response = client.chat.completions.create(
-                model="ft:babbage-002:verfit::8PV5wQQV",
+                model="gpt-3.5-turbo",
                 messages=[
                     {"role": "user", "content": "Lecture Content: ["+text.text+"] Problem Type: Essay"},
                 ]
@@ -104,7 +104,7 @@ def make_summary(text: Text):
 
     try:
         response = client.chat.completions.create(
-            model="ft:babbage-002:verfit::8PV5wQQV",
+            model="gpt-3.5-turbo",
             messages=[
                 {"role": "user", "content": "다음 내용을 노션 개요식으로 요약 및 정리해 주세요."},
                 {"role": "user", "content": text.text}
