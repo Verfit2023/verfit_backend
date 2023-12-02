@@ -10,7 +10,7 @@ from datetime import datetime
 import os
 import openai
 
-API_KEY= 'sk***'
+API_KEY= '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'
 os.environ["OPENAI_API_KEY"] = API_KEY
 
 load_dotenv()
@@ -48,34 +48,30 @@ def make_question_and_answer(problemType: int, text: Text):
     try:
         if problemType == 1:
             response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model="babbage-002",
                 messages=[
-                    {"role": "user", "content": "다음 내용 바탕으로 TF문제 3문제를 답과 함께 생성해주세요."},
-                    {"role": "user", "content": text.text}
+                    {"role": "user", "content": "Lecture Content: ["+text.text+"] Problem Type: True or False"},
                 ]
             )
         elif problemType == 2:
             response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model="babbage-002",
                 messages=[
-                    {"role": "user", "content": "다음 내용 바탕으로 빈칸 채우기 문제 3문제를 답과 함께 생성해주세요."},
-                    {"role": "user", "content": text.text}
+                    {"role": "user", "content": "Lecture Content: ["+text.text+"] Problem Type: Fill in the Blank"},
                 ]
             )
         elif problemType == 3:
             response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model="babbage-002",
                 messages=[
-                    {"role": "user", "content": "다음 내용 바탕으로 단답형 문제 3문제를 답과 함께 생성해주세요."},
-                    {"role": "user", "content": text.text}
+                    {"role": "user", "content": "Lecture Content: ["+text.text+"] Problem Type: Short Answer"},
                 ]
             )
         else:
             response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model="babbage-002",
                 messages=[
-                    {"role": "user", "content": "다음 내용 바탕으로 서술형 문제 3문제를 답과 함께 생성해주세요."},
-                    {"role": "user", "content": text.text}
+                    {"role": "user", "content": "Lecture Content: ["+text.text+"] Problem Type: Essay"},
                 ]
             )
         
