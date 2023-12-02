@@ -10,7 +10,7 @@ from datetime import datetime
 import os
 import openai
 
-API_KEY= 'sk-**'
+API_KEY= ''
 os.environ["OPENAI_API_KEY"] = API_KEY
 
 load_dotenv()
@@ -47,37 +47,32 @@ def make_question_and_answer(problemType: int, text: Text):
 
     try:
         if problemType == 1:
-            response = client.chat.completions.create(
-                model="babbage-002",
-                messages=[
-                    {"role": "user", "content": "Lecture Content: ["+text.text+"] Problem Type: True or False"},
-                ]
+            response = openai.completions.create(
+                model="ft:babbage-002:verfit::8PV5wQQV",
+                prompt="role: user, content: Lecture Content: ["+text.text+"] Problem Type: True or False"
+                #max_tokens=7,
+                #temperature=0
             )
         elif problemType == 2:
-            response = client.chat.completions.create(
-                model="babbage-002",
-                messages=[
-                    {"role": "user", "content": "Lecture Content: ["+text.text+"] Problem Type: Fill in the Blank"},
-                ]
+             response = openai.completions.create(
+                model="ft:babbage-002:verfit::8PV5wQQV",
+                prompt="role: user, content: Lecture Content: ["+text.text+"] Problem Type: Fill in the Blank"
             )
         elif problemType == 3:
-            response = client.chat.completions.create(
-                model="babbage-002",
-                messages=[
-                    {"role": "user", "content": "Lecture Content: ["+text.text+"] Problem Type: Short Answer"},
-                ]
+            response = openai.completions.create(
+                model="ft:babbage-002:verfit::8PV5wQQV",
+                prompt="role: user, content: Lecture Content: ["+text.text+"] Problem Type: Short Answer"
             )
         else:
-            response = client.chat.completions.create(
-                model="babbage-002",
-                messages=[
-                    {"role": "user", "content": "Lecture Content: ["+text.text+"] Problem Type: Essay"},
-                ]
+            response = openai.completions.create(
+                model="ft:babbage-002:verfit::8PV5wQQV",
+                prompt="role: user, content: Lecture Content: ["+text.text+"] Problem Type: Essay"
             )
         
-        return {"content": response.choices[0].message.content, "message": "문제가 생성되었습니다"}
-    except:
-        return {"message": "문제 생성 과정에서 오류가 발생하였습니다."} 
+        return {"content": response.choices[0].text, "message": "문제가 생성되었습니다"}
+    except Exception as e:
+        return {"message": f"문제 생성 과정에서 오류가 발생하였습니다: {str(e)}"}
+
 
 
 
@@ -93,7 +88,7 @@ def save_question(problemType: int, problem: Text, workbook_id: int):
         try:
             update_workbook(workbook_id, {"$set": {"problems": list_of_probs}})
             return {"message": "문제가 정상적으로 저장되었습니다."}
-        except:
+        except Exception as e:
             return {"message": "문제 저장 과정에서 오류가 발생하였습니다."}
     else:
         return RedirectResponse(url="/newworkbook") # 이거 제대로 가는지 아직 확실 X...
@@ -111,7 +106,7 @@ def make_summary(text: Text):
             ]
         )
         return {"content": response.choices[0].message.content, "message": "요약본이 정상적으로 생성되었습니다."}
-    except:
+    except Exception as e:
         return {"message": "요약 과정에서 에러가 발생하였습니다."}
     
 @router.post('/summary/save', tags=['generation'])
