@@ -74,8 +74,6 @@ def make_question_and_answer(problemType: int, text: Text):
         return {"message": f"문제 생성 과정에서 오류가 발생하였습니다: {str(e)}"}
 
 
-
-
 @router.post('/question/save', tags=['generation'])
 def save_question(problemType: int, problem: Text, workbook_id: int):
 
