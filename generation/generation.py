@@ -8,16 +8,25 @@ from accounts.schemas import *
 from fastapi.responses import RedirectResponse
 from datetime import datetime
 import os
-import openai
-
-API_KEY= ''
-os.environ["OPENAI_API_KEY"] = API_KEY
+from fastapi.security import OAuth2PasswordBearer
+from datetime import datetime, timedelta
+from accounts.dependencies import oauth2_scheme, get_current_user, get_token_from_session
+from fastapi import FastAPI, File, UploadFile, Depends
 
 load_dotenv()
 
 router = APIRouter(
     prefix="/generation",
 )
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+
+def get_current_user(token: str = Depends(oauth2_scheme)):
+    user = get_token_from_session(token)
+    if not user:
+        return None
+    return user
 
 class Text(BaseModel):
     text: str
@@ -34,49 +43,47 @@ def upload_lecture_file(file: UploadFile):
         text += '\n'
 
     if text == "":
-        response = {"message": "파일 업로드 과정에서 에러가 발생했습니다."}
+        response = {"text": text, "message": "파일 업로드 과정에서 에러가 발생했습니다."}
     else:
-        response = {"message": "파일이 정상적으로 업로드 되었습니다."}
+        response = {"text": text, "message": "파일이 정상적으로 업로드 되었습니다."}
 
     return response
 
 
 @router.post('/question', tags=['generation'])
 def make_question_and_answer(problemType: int, text: Text):
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    client = OpenAI()
 
     try:
         if problemType == 1:
-            response = openai.completions.create(
+            response = client.completions.create(
                 model="ft:babbage-002:verfit::8PV5wQQV",
-                prompt="role: user, content: Lecture Content: ["+text.text+"] Problem Type: True or False"
-                #max_tokens=7,
-                #temperature=0
+                prompt="role: user, content: Lecture Content: [" + text.text + "] Problem Type: True or False"
             )
         elif problemType == 2:
-             response = openai.completions.create(
+            response = client.completions.create(
                 model="ft:babbage-002:verfit::8PV5wQQV",
-                prompt="role: user, content: Lecture Content: ["+text.text+"] Problem Type: Fill in the Blank"
+                prompt="role: user, content: Lecture Content: [" + text.text + "] Problem Type: Fill in the Blank"
             )
         elif problemType == 3:
-            response = openai.completions.create(
+            response = client.completions.create(
                 model="ft:babbage-002:verfit::8PV5wQQV",
-                prompt="role: user, content: Lecture Content: ["+text.text+"] Problem Type: Short Answer"
+                prompt="role: user, content: Lecture Content: [" + text.text + "] Problem Type: Short Answer"
             )
         else:
-            response = openai.completions.create(
+            response = client.completions.create(
                 model="ft:babbage-002:verfit::8PV5wQQV",
-                prompt="role: user, content: Lecture Content: ["+text.text+"] Problem Type: Essay"
+                prompt="role: user, content: Lecture Content: [" + text.text + "] Problem Type: Essay"
             )
-        
+
         return {"content": response.choices[0].text, "message": "문제가 생성되었습니다"}
     except Exception as e:
         return {"message": f"문제 생성 과정에서 오류가 발생하였습니다: {str(e)}"}
 
 
 @router.post('/question/save', tags=['generation'])
-def save_question(problemType: int, problem: Text, workbook_id: int):
-
+def save_question(problem: Text, workbook_id: int):
+    problemType = 1
     workbook = get_workbook(workbook_id)
 
     if workbook:
@@ -121,12 +128,34 @@ def save_summary(content: Text, workbook_id: int):
             return {"message": "요약본이 정상적으로 저장되었습니다."}
         except:
             return {"message": "요약본 저장 과정에서 오류가 발생하였습니다."}
-        
+
+
 @router.post('/newworkbook', tags=['generation'])
-def create_new_workbook(title: str, subject: str, description: str, owner: User):
-    workbook = {"workbook_id":get_total_num_of_workbooks()+1, "title":title, "subject":subject, "description":description, "created_at":datetime(), "rate":0, "problems":[], "summaries":[], "owner": owner, "comments":[], "pubpriv":0}
+def create_new_workbook(
+        title: str,
+        subject: str,
+        description: str
+):
+    new_workbook_id = get_total_num_of_workbooks() + 1  # 새로운 문제집의 ID 생성
+    created_at = datetime.now()  # 현재 시간 가져오기
+
+    workbook = {
+        "workbook_id": new_workbook_id,
+        "title": title,
+        "subject": subject,
+        "description": description,
+        "created_at": created_at,
+        "rate": 0,
+        "problems": [],
+        "summaries": [],
+        "owner": "email",
+        "comments": [],
+        "pubpriv": 0
+    }
+
     added_or_not = create_workbook(workbook)
+
     if added_or_not:
-        return {"message": "새로운 문제집이 정상적으로 저장되었습니다."} 
+        return {"id": new_workbook_id, "message": "새로운 문제집이 정상적으로 저장되었습니다."}
     else:
-        return {"message": "새로운 문제집을 저장하는 과정에서 오류가 발생하였거나, 문제집이 이미 존재합니다."} 
+        return {"message": "새로운 문제집을 저장하는 과정에서 오류가 발생하였거나, 문제집이 이미 존재합니다."}

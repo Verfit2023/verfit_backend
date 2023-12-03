@@ -83,7 +83,7 @@ async def user_logout(request: Request):
 
 
 @router.post("/admin/logout")
-async def admin_logout(request: Request): 
+async def admin_logout(request: Request):
     token = await dependencies.get_token_from_session(request)
     if not token:
         raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Not authenticated")

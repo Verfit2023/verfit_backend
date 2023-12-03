@@ -7,10 +7,7 @@ db = client.Prosumer  # 데이터베이스 이름 설정
 
 # 데이터베이스 워크북 생성
 def create_workbook(workbook_data: Workbook):
-    if db.Workbooks.find_one({"workbook_id": workbook_data.workbook_id}):
-        return False
-    
-    db.Workbooks.insert_one(workbook_data.dict())
+    db.Workbooks.insert_one(workbook_data)
     return True
 
 # 데이터베이스 워크북 조회
@@ -39,9 +36,9 @@ def delete_workbook(workbook_id: int):
     else:
         return "Workbook not found"
     
-# 데이터베이스 워크북 전체 조회 (상위 n개)
-def get_workbooks(limit: int = 10):
-    workbooks = db.Workbooks.find().sort('created_at', -1).limit(limit)
+# 데이터베이스 워크북 검색 조회
+def get_workbooks():
+    workbooks = db.Workbooks.find().sort('created_at', -1)
     print(list(workbooks))
     return list(workbooks)
 

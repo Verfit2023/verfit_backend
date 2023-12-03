@@ -19,6 +19,6 @@ class Workbook(BaseModel):
     rate: int = Field(..., description="좋아요 수")
     problems: List[tuple] = Field(..., description="문제집에 포함되어 있는 문제들(type, questions, answers)")
     summaries: List[str] = Field(..., description="문제집에 포함된 요약 정리본들")
-    owner: User = Field(..., description="소유자")
+    owner: str = Field(..., description="소유자")
     comments: List[Comments] = Field(..., description="댓글")
     pubpriv: int = Field(..., description="공개여부")
