@@ -8,7 +8,6 @@ from accounts.dependencies import oauth2_scheme, get_current_user, get_token_fro
 from workbook.models import Workbook
 from dotenv import load_dotenv
 from typing import Optional
-from typing import Annotated
 from fastapi import Depends, FastAPI
 
 
