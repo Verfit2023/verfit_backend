@@ -11,7 +11,7 @@ from datetime import datetime
 import os
 import openai
 
-API_KEY= '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'
+API_KEY= 'sk-**'
 os.environ["OPENAI_API_KEY"] = API_KEY
 
 load_dotenv()
