@@ -4,7 +4,9 @@ from dotenv import load_dotenv
 import PyPDF2
 from openai import OpenAI
 from workbook.database import *
+from workbook.models import *
 from accounts.schemas import *
+from accounts.crud import *
 from fastapi.responses import RedirectResponse
 from datetime import datetime
 import os
@@ -13,6 +15,10 @@ from datetime import datetime, timedelta
 from accounts.dependencies import oauth2_scheme, get_current_user, get_token_from_session
 from fastapi import FastAPI, File, UploadFile, Depends
 
+MONGODB_URL = "mongodb://localhost:27017"
+client = MongoClient(MONGODB_URL)
+db = client.Prosumer  # 데이터베이스 이름 설정
+
 load_dotenv()
 
 router = APIRouter(
@@ -20,17 +26,6 @@ router = APIRouter(
 )
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
-
-def get_current_user(token: str = Depends(oauth2_scheme)):
-    user = get_token_from_session(token)
-    if not user:
-        return None
-    return user
-
-class Text(BaseModel):
-    text: str
-
 
 @router.post('/upload-file', tags=['generation'])
 def upload_lecture_file(file: UploadFile):
@@ -48,6 +43,43 @@ def upload_lecture_file(file: UploadFile):
         response = {"text": text, "message": "파일이 정상적으로 업로드 되었습니다."}
 
     return response
+
+@router.get("/newworkbook/getdata", tags=['generation'])
+def get_data():
+    return
+
+
+@router.post('/newworkbook', tags=['generation'])
+def create_new_workbook(
+    title: str,
+    subject: str,
+    description: str,
+    current_user: UserInDB = Depends(get_current_user)
+):
+    try:
+        id = get_total_num_of_workbooks() + 1
+        workbook = Workbook(
+            workbook_id=id,
+            title=title,
+            subject=subject,
+            description=description,
+            created_at=datetime.now(),
+            rate=0,
+            problems=[],
+            summaries=[],
+            owner_email=current_user["useremail"],
+            comments=[],
+            pubpriv=0
+        )
+        made_workbooks = current_user["made_workbook_id"]
+        made_workbooks.append(workbook.workbook_id)
+        update_user_workbooks(current_user["useremail"], made_workbooks)
+        create_workbook(workbook)
+        return {"id": id, "message": "새로운 문제집이 정상적으로 저장되었습니다."}
+    except Exception as e:
+        return {
+            "message": f"새로운 문제집을 저장하는 과정에서 오류가 발생하였거나, 문제집이 이미 존재합니다: {str(e)}"
+        }
 
 
 @router.post('/question', tags=['generation'])
@@ -87,16 +119,16 @@ def save_question(problem: Text, workbook_id: int):
     workbook = get_workbook(workbook_id)
 
     if workbook:
-        list_of_probs = workbook.get("problems", [])
+        list_of_probs = workbook.problems
         list_of_probs.append((problemType, problem)) # question과 answer 어떻게 구분할 것인지 논의
 
         try:
-            update_workbook(workbook_id, {"$set": {"problems": list_of_probs}})
+            update_workbook(workbook_id, workbook)
             return {"message": "문제가 정상적으로 저장되었습니다."}
         except Exception as e:
-            return {"message": "문제 저장 과정에서 오류가 발생하였습니다."}
+            return {"message": f"문제 저장 과정에서 오류가 발생하였습니다: {str(e)}"}
     else:
-        return RedirectResponse(url="/newworkbook") # 이거 제대로 가는지 아직 확실 X...
+        return
     
 @router.post('/summary', tags=['generation'])
 def make_summary(text: Text):
@@ -120,42 +152,11 @@ def save_summary(content: Text, workbook_id: int):
     workbook = get_workbook(workbook_id)
 
     if workbook:
-        list_of_sums = workbook.get("summaries", [])
+        list_of_sums = workbook.summaries
         list_of_sums.append(content)
 
         try:
-            update_workbook(workbook_id, {"$set": {"summaries": list_of_sums}})
+            update_workbook(workbook_id, workbook)
             return {"message": "요약본이 정상적으로 저장되었습니다."}
         except:
             return {"message": "요약본 저장 과정에서 오류가 발생하였습니다."}
-
-
-@router.post('/newworkbook', tags=['generation'])
-def create_new_workbook(
-        title: str,
-        subject: str,
-        description: str
-):
-    new_workbook_id = get_total_num_of_workbooks() + 1  # 새로운 문제집의 ID 생성
-    created_at = datetime.now()  # 현재 시간 가져오기
-
-    workbook = {
-        "workbook_id": new_workbook_id,
-        "title": title,
-        "subject": subject,
-        "description": description,
-        "created_at": created_at,
-        "rate": 0,
-        "problems": [],
-        "summaries": [],
-        "owner": "email",
-        "comments": [],
-        "pubpriv": 0
-    }
-
-    added_or_not = create_workbook(workbook)
-
-    if added_or_not:
-        return {"id": new_workbook_id, "message": "새로운 문제집이 정상적으로 저장되었습니다."}
-    else:
-        return {"message": "새로운 문제집을 저장하는 과정에서 오류가 발생하였거나, 문제집이 이미 존재합니다."}
