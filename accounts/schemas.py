@@ -9,7 +9,7 @@ class User(BaseModel):
     userpassword: str = Field(..., description="User 비밀번호")
     made_workbook_id: List[int] = Field(description="자신이 생성한 문제집 list", default=[])
     fav_workbook_id: List[int] = Field(description="즐겨찾기 한 문제집 list", default=[])
-    userpassword_confirm: str = Field(alias="userpasswordConfirm", description="userpasswordConfirm")
+    userpassword_confirm: Optional[str] = Field(alias="userpasswordConfirm", description="userpasswordConfirm")
     ability_score: Dict[str, int] = Field(description="인식능력, 학습전략, 학습활동, 평가, 의사소통과 협력, 총점")
 
     # 비밀번호 일치 검증 메서드 추가
@@ -17,6 +17,7 @@ class User(BaseModel):
         flag = self.userpassword == self.userpassword_confirm
         self.userpassword_confirm =""
         return flag
+    
 
 
 class UserInDB(User):

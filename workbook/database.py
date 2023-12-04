@@ -3,13 +3,12 @@ from workbook.models import Workbook  # Workbook 모델 임포트
 
 MONGODB_URL = "mongodb://localhost:27017"
 client = MongoClient(MONGODB_URL)
-db = client.Prosumer  # 데이터베이스 이름 설정
+db = client.Verfit  # 데이터베이스 이름 설정
 
 # 데이터베이스 워크북 생성
 def create_workbook(workbook_data: Workbook):
     if db.Workbooks.find_one({"workbook_id": workbook_data.workbook_id}):
         return False
-    
     db.Workbooks.insert_one(workbook_data.dict())
     return True
 
@@ -25,7 +24,10 @@ def get_workbook(workbook_id: int):
 def update_workbook(workbook_id: int, workbook_data: Workbook):
     workbook = db.Workbooks.find_one({"workbook_id": workbook_id})
     if workbook:
-        db.Workbooks.update_one({"workbook_id": workbook_id}, {"$set": workbook_data.dict()})
+        try:
+            db.Workbooks.update_one({"workbook_id": workbook_id}, {"$set": workbook_data.dict()})
+        except Exception as e:
+            return {"message": f"워크북 업데이트 과정에서 오류가 발생했습니다: {str(e)}"}
         return "Workbook updated successfully"
     else:
         return "Workbook not found"
