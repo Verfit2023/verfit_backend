@@ -63,25 +63,25 @@ def make_question_and_answer(problemType: int, text: Text):
     try:
         if problemType == 1:
             response = openai.completions.create(
-                model="ft:davinci-002:verfit::8PV6Zmzw",
-                prompt="role: user, content: based on lecture content "+text.text+", create 10 True or False questions with answers and explanations.",
-                max_tokens=2048,
-                temperature=0.8
+                model="ft:babbage-002:verfit::8PV5wQQV",
+                prompt="role: user, content: Lecture Content: ["+text.text+"] Problem Type: True or False"
+                #max_tokens=7,
+                #temperature=0
             )
         elif problemType == 2:
              response = openai.completions.create(
                 model="ft:babbage-002:verfit::8PV5wQQV",
-                prompt="role: user, content:"+text.text+"의 학습 자료를 기반으로, Fill in the Blank 유형의 문제 10개를 problem의 변수명으로, 그리고 답을 answer의 변수명으로, 그에 대한 설명을 explanations의 변수명으로 생성해 주세요"
+                prompt="role: user, content: Lecture Content: ["+text.text+"] Problem Type: Fill in the Blank"
             )
         elif problemType == 3:
             response = openai.completions.create(
                 model="ft:babbage-002:verfit::8PV5wQQV",
-                prompt="role: user, content:"+text.text+"의 학습 자료를 기반으로, Short Answer 유형의 문제 10개를 problem의 변수명으로, 그리고 답을 answer의 변수명으로, 그에 대한 설명을 explanations의 변수명으로 생성해 주세요"
+                prompt="role: user, content: Lecture Content: ["+text.text+"] Problem Type: Short Answer"
             )
         else:
             response = openai.completions.create(
                 model="ft:babbage-002:verfit::8PV5wQQV",
-                prompt="role: user, content:"+text.text+"의 학습 자료를 기반으로, Essay 유형의 문제 10개를 problem의 변수명으로, 그리고 답을 answer의 변수명으로, 그에 대한 설명을 explanations의 변수명으로 생성해 주세요"
+                prompt="role: user, content: Lecture Content: ["+text.text+"] Problem Type: Essay"
             )
         
         return {"content": response.choices[0].text, "message": "문제가 생성되었습니다"}
@@ -104,7 +104,7 @@ def save_question(problemType: int, problem: Text, workbook_id: int):
         except Exception as e:
             return {"message": f"문제 저장 과정에서 오류가 발생하였습니다: {str(e)}"}
     else:
-        return RedirectResponse("/generation/newworkbook/getdata", status_code=303) # 이거 제대로 가는지 아직 확실 X...
+        return RedirectResponse("/generation/newworkbook/getdata", status_code=303)
     
 @router.post('/summary', tags=['generation'])
 def make_summary(text: Text):
