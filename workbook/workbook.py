@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 from accounts.schemas import User
 from workbook.database import *
+from workbook.models import *
 from fastapi.responses import RedirectResponse
 from datetime import datetime
 from database import db
@@ -31,7 +32,7 @@ def like_or_dislike(workbook_id: int, user: User):
         list_of_fav.append(workbook_id)
     
     try:
-        db.users.update_one({"useremail": user.useremail}, user)
+        db.users.update_one({"useremail": user.useremail}, {"$set": user.dict()})
         return {"message": "문제집을 즐겨찾기에 추가 혹은 삭제 완료하였습니다."}
     except:
         return {"message": "문제집을 즐겨찾기에 추가/삭제하는 도중 오류가 발생했습니다."}
@@ -43,7 +44,7 @@ def add_comment(workbook_id: int, user: User, comment_content: str):
 
     if workbook:
         list_of_comm = workbook.comments
-        comment = {"content":comment_content, "writer":user, "created_at":datetime.now()}
+        comment = Comments(content=comment_content, writer=user.useremail, created_at=datetime.now())
         list_of_comm.append(comment)
 
         try:

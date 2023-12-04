@@ -6,6 +6,7 @@ from openai import OpenAI
 from workbook.database import *
 from workbook.models import *
 from accounts.schemas import *
+from accounts.crud import *
 from fastapi.responses import RedirectResponse
 from datetime import datetime
 import os
@@ -14,14 +15,15 @@ import openai
 API_KEY= 'sk-**'
 os.environ["OPENAI_API_KEY"] = API_KEY
 
+MONGODB_URL = "mongodb://localhost:27017"
+client = MongoClient(MONGODB_URL)
+db = client.Verfit  # 데이터베이스 이름 설정
+
 load_dotenv()
 
 router = APIRouter(
     prefix="/generation",
 )
-
-class Text(BaseModel):
-    text: str
 
 
 @router.post('/upload-file', tags=['generation'])
@@ -50,7 +52,9 @@ def get_data():
 def create_new_workbook(title: str, subject: str, description: str, owner: User):
     workbook = Workbook(workbook_id=get_total_num_of_workbooks()+1, title=title, subject=subject, description=description, created_at=datetime.now(), rate=0, problems=[], summaries=[], owner_email=owner.useremail, comments=[], pubpriv=0)
     try:
-        added_or_not = create_workbook(workbook)
+        made_workbooks = owner.made_workbook_id
+        made_workbooks.append(workbook.workbook_id)
+        db.users.update_one({"useremail": owner.useremail}, {"$set": owner.dict()})
         return {"message": "새로운 문제집이 정상적으로 저장되었습니다."} 
     except Exception as e:
         return {"message": f"새로운 문제집을 저장하는 과정에서 오류가 발생하였거나, 문제집이 이미 존재합니다: {str(e)}"} 
@@ -136,3 +140,5 @@ def save_summary(content: Text, workbook_id: int):
             return {"message": "요약본이 정상적으로 저장되었습니다."}
         except:
             return {"message": "요약본 저장 과정에서 오류가 발생하였습니다."}
+    else:
+        return RedirectResponse("/generation/newworkbook/getdata", status_code=303)
