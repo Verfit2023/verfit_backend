@@ -62,3 +62,15 @@ def update_user_workbooks(user_email, made_workbooks):
         return {"message": "정상적으로 업데이트되었습니다."}
     else:
         return {"message": "업데이트에 실패하였습니다."}
+
+
+def update_user_fav_workbooks(user_email, fav_workbooks):
+    result = db.users.update_one(
+        {"useremail": user_email},
+        {"$set": {"fav_workbook_id": fav_workbooks}}
+    )
+
+    if result.modified_count == 1:
+        return {"message": "정상적으로 업데이트되었습니다."}
+    else:
+        return {"message": "업데이트에 실패하였습니다."}
