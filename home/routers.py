@@ -21,22 +21,30 @@ def get_workbooks(
     workbooks = database.get_workbooks()
     if type and keyword:
         if type == "제목":
-            filtered_workbooks = [wb for wb in workbooks if keyword in wb.title]
+            filtered_workbooks = [wb for wb in workbooks if keyword.lower() in wb["title"].lower()]
         elif type == "과목":
-            filtered_workbooks = [wb for wb in workbooks if keyword in wb.subject]
+            filtered_workbooks = [wb for wb in workbooks if keyword.lower() in wb["subject"].lower()]
         elif type == "설명":
-            filtered_workbooks = [wb for wb in workbooks if keyword in wb.description]
+            filtered_workbooks = [wb for wb in workbooks if keyword.lower() in wb["description"].lower()]
         else:
             filtered_workbooks = \
-                [wb for wb in workbooks if (keyword in wb.title) or
-                 (keyword in wb.subject) or (keyword in wb.description)]
+                [wb for wb in workbooks if (keyword.lower() in wb["title"].lower()) or
+                 (keyword.lower() in wb["subject"].lower()) or (keyword.lower() in wb["description"].lower())]
 
         if filtered_workbooks:
-            return {"workbooks": filtered_workbooks}
+            filtered_workbooks_without_id = [
+                {key: value for key, value in wb.items() if key != '_id'}
+                for wb in filtered_workbooks
+            ]
+            return {"workbooks": filtered_workbooks_without_id}
         else:
             return {"workbooks": [], "message": "Matching Workbooks not found", "type": type, "keyword": keyword}
     else:
         if workbooks:
-            return {"workbooks": workbooks}
+            workbooks_without_id = [
+                {key: value for key, value in wb.items() if key != '_id'}
+                for wb in workbooks
+            ]
+            return {"workbooks": workbooks_without_id}
         else:
             return {"workbooks": [], "message": "Workbook not found"}

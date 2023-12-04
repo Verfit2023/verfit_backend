@@ -40,12 +40,17 @@ def delete_workbook(workbook_id: int):
         return "Workbook deleted successfully"
     else:
         return "Workbook not found"
-    
+
+
 # 데이터베이스 워크북 검색 조회
 def get_workbooks():
-    workbooks = db.Workbooks.find().sort('created_at', -1)
-    print(list(workbooks))
-    return list(workbooks)
+    try:
+        workbooks = list(db.Workbooks.find().sort('created_at', -1))
+        return workbooks
+    except Exception as e:
+        print(f"Error fetching workbooks: {e}")
+        return []
+
 
 # 데이터베이스 워크북 개수 세기
 def get_total_num_of_workbooks():
