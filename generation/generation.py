@@ -54,6 +54,7 @@ def create_new_workbook(
     title: str,
     subject: str,
     description: str,
+    imgurl: str,
     current_user: UserInDB = Depends(get_current_user)
 ):
     try:
@@ -63,6 +64,7 @@ def create_new_workbook(
             title=title,
             subject=subject,
             description=description,
+            imgurl=imgurl,
             created_at=datetime.now(),
             rate=0,
             problems=[],

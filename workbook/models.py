@@ -17,6 +17,7 @@ class Workbook(BaseModel):
     title: str = Field(..., description="제목")
     subject: str = Field(..., description="과목")
     description: Optional[str] = Field(None, description="설명")
+    imgurl: Optional[str] = Field(..., description="표지 이미지 url")
     created_at: datetime = Field(..., description="생성 날짜")
     rate: int = Field(..., description="좋아요 수")
     problems: List[tuple] = Field(..., description="문제집에 포함되어 있는 문제들(type, questions, answers)")
