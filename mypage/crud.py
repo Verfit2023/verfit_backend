@@ -23,3 +23,4 @@ async def perform_ability_test(useremail: str, test_answers: AbilityTestAnswers)
     test_result['total'] = total_score
     await db["users"].update_one({"useremail": useremail}, {"$set": {"ability_score": test_result}})
     return test_result
+

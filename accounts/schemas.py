@@ -12,7 +12,7 @@ class User(BaseModel):
     fav_workbook_id: List[int] = Field(description="즐겨찾기 한 문제집 list", default=[])
     ability_score: Dict[str, int] = Field(
         description="인식능력, 학습전략, 학습활동, 평가, 의사소통과 협력, 총점",
-        default={"인식능력": 0, "학습전략": 0, "학습활동": 0, "평가": 0, "의사소통과 협력": 0, "총점": 0})
+        default={"인식능력": 0, "학습전략": 0, "학습활동": 0, "평가": 0, "의사소통과 협력": 0})
 
 
 class UserInDB(User):
