@@ -19,6 +19,7 @@ def get_workbooks(
     keyword: Optional[str] = None,
 ):
     workbooks = database.get_workbooks()
+    workbooks = [wb for wb in workbooks if wb["pubpriv"] == 1]
     if type and keyword:
         if type == "제목":
             filtered_workbooks = [wb for wb in workbooks if keyword.lower() in wb["title"].lower()]

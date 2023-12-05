@@ -73,22 +73,22 @@ def add_comment(workbook_id: int, comment: str, current_user: UserInDB = Depends
 
 
 @router.post('/{workbook_id}/pubpriv', tags=['workbook'])
-def pub_or_priv(workbook_id: int, user: User):
-
-    list_of_made_workbooks = user.made_workbook_id
+def pub_or_priv(workbook_id: int, current_user: UserInDB = Depends(get_current_user)):
 
     workbook = get_workbook(workbook_id)
+    if workbook:
+        if workbook.owner_email == current_user["useremail"]:
+            if workbook.pubpriv == 0:
+                workbook.pubpriv = 1
+            else:
+                workbook.pubpriv = 0
 
-    if workbook_id in list_of_made_workbooks:
-        if workbook.pubpriv == 0:
-            workbook.pubpriv = 1
+            try:
+                update_workbook(workbook_id, workbook)
+                return {"message": "문제집의 공개 여부를 변환 완료하였습니다."}
+            except:
+                return {"message": "문제집의 공개 여부를 변환하는 과정에서 오류가 발생하였습니다."}
         else:
-            workbook.pubpriv = 0
-
-        try:
-            update_workbook(workbook_id, workbook)
-            return {"message": "문제집의 공개 여부를 변환 완료하였습니다."}
-        except:
-            return {"message": "문제집의 공개 여부를 변환하는 과정에서 오류가 발생하였습니다."}
+            return {"message": "현재 유저가 만든 문제집이 아닙니다."}
     else:
-        return {"message": "현재 유저가 만든 문제집이 아닙니다."}
+        return {"message": "문제집을 찾을 수 없습니다."}

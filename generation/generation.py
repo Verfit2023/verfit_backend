@@ -71,7 +71,7 @@ def create_new_workbook(
             summaries=[],
             owner_email=current_user["useremail"],
             comments=[],
-            pubpriv=0
+            pubpriv=1
         )
         made_workbooks = current_user["made_workbook_id"]
         made_workbooks.append(workbook.workbook_id)
