@@ -11,7 +11,7 @@ from starlette.requests import Request
 # openssl rand -hex 32로 생성, 프로덕션 환경으로 이동하기 전에 secret_key 바꿀 예정, 그땐 git에 업로드 x
 SECRET_KEY = "cc9de4a7ed495f04babbfe43da3cab6882b591db39a2a8689eaedff58a623031"
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 90
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/accounts/login")

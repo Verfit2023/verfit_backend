@@ -10,6 +10,7 @@ class Text(BaseModel):
 class Comments(BaseModel):
     content: str = Field(..., description="댓글 내용")
     writer: str = Field(..., description="작성자")
+    writer_nickname: str = Field(..., description="작성자 닉네임")
     created_at: datetime = Field(..., description="생성 날짜")
 
 class Workbook(BaseModel):

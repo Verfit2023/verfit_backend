@@ -54,21 +54,24 @@ def like_or_dislike(workbook_id: int, current_user: UserInDB = Depends(get_curre
 
 
 @router.post('/{workbook_id}/addcomment', tags=['workbook'])
-def add_comment(workbook_id: int, user: User, comment_content: str):
+def add_comment(workbook_id: int, comment: str, current_user: UserInDB = Depends(get_current_user)):
 
     workbook = get_workbook(workbook_id)
-
     if workbook:
         list_of_comm = workbook.comments
-        comment = Comments(content=comment_content, writer=user.useremail, created_at=datetime.now())
+        print(comment)
+        comment = Comments(content=comment, writer=current_user["useremail"], writer_nickname=current_user["username"], created_at=datetime.now())
         list_of_comm.append(comment)
+        workbook.comments = list_of_comm
 
         try:
             update_workbook(workbook_id, workbook)
-            return {"message": "댓글이 성공적으로 추가되었습니다."}
+            updated_workbook = get_workbook(workbook_id)
+            return {"comments": updated_workbook.comments, "message": "댓글이 성공적으로 추가되었습니다."}
         except:
             return {"message": "댓글 추가 중 오류가 발생했습니다."}
-        
+
+
 @router.post('/{workbook_id}/pubpriv', tags=['workbook'])
 def pub_or_priv(workbook_id: int, user: User):
 
