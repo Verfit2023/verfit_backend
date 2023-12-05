@@ -1,19 +1,14 @@
-from fastapi import APIRouter, UploadFile
-from pydantic import BaseModel
+from fastapi import APIRouter, UploadFile, Depends
 from dotenv import load_dotenv
 import PyPDF2
 from openai import OpenAI
 from workbook.database import *
 from workbook.models import *
 from accounts.schemas import *
-from accounts.crud import *
-from fastapi.responses import RedirectResponse
-from datetime import datetime
 import os
 from fastapi.security import OAuth2PasswordBearer
-from datetime import datetime, timedelta
-from accounts.dependencies import oauth2_scheme, get_current_user, get_token_from_session
-from fastapi import FastAPI, File, UploadFile, Depends
+from datetime import datetime
+from accounts.dependencies import get_current_user
 
 MONGODB_URL = "mongodb://localhost:27017"
 client = MongoClient(MONGODB_URL)
@@ -26,6 +21,7 @@ router = APIRouter(
 )
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
 
 @router.post('/upload-file', tags=['generation'])
 def upload_lecture_file(file: UploadFile):
@@ -43,6 +39,7 @@ def upload_lecture_file(file: UploadFile):
         response = {"text": text, "message": "파일이 정상적으로 업로드 되었습니다."}
 
     return response
+
 
 @router.get("/newworkbook/getdata", tags=['generation'])
 def get_data():
@@ -131,7 +128,8 @@ def save_question(problem: Text, workbook_id: int):
             return {"message": f"문제 저장 과정에서 오류가 발생하였습니다: {str(e)}"}
     else:
         return
-    
+
+
 @router.post('/summary', tags=['generation'])
 def make_summary(text: Text):
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -147,7 +145,8 @@ def make_summary(text: Text):
         return {"content": response.choices[0].message.content, "message": "요약본이 정상적으로 생성되었습니다."}
     except Exception as e:
         return {"message": "요약 과정에서 에러가 발생하였습니다."}
-    
+
+
 @router.post('/summary/save', tags=['generation'])
 def save_summary(content: Text, workbook_id: int):
 

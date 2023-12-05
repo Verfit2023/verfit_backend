@@ -5,12 +5,14 @@ MONGODB_URL = "mongodb://localhost:27017"
 client = MongoClient(MONGODB_URL)
 db = client.Verfit  # 데이터베이스 이름 설정
 
+
 # 데이터베이스 워크북 생성
 def create_workbook(workbook_data: Workbook):
     if db.Workbooks.find_one({"workbook_id": workbook_data.workbook_id}):
         return False
     db.Workbooks.insert_one(workbook_data.dict())
     return True
+
 
 # 데이터베이스 워크북 조회
 def get_workbook(workbook_id: int):
@@ -19,6 +21,7 @@ def get_workbook(workbook_id: int):
         return Workbook(**workbook)
     else:
         return None
+
 
 # 데이터베이스 워크북 수정
 def update_workbook(workbook_id: int, workbook_data: Workbook):
@@ -31,6 +34,7 @@ def update_workbook(workbook_id: int, workbook_data: Workbook):
         return "Workbook updated successfully"
     else:
         return "Workbook not found"
+
 
 # 데이터베이스 워크북 삭제
 def delete_workbook(workbook_id: int):

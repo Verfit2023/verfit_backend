@@ -1,13 +1,7 @@
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel
 from dotenv import load_dotenv
-from accounts.schemas import User
 from workbook.database import *
 from workbook.models import *
-from fastapi.responses import RedirectResponse
-from accounts.dependencies import oauth2_scheme, get_current_user
-from datetime import datetime
-from database import db
 from fastapi.security import OAuth2PasswordBearer
 from datetime import datetime
 from accounts.dependencies import get_current_user
@@ -31,9 +25,9 @@ def get_requested_workbook(workbook_id: int, current_user: UserInDB = Depends(ge
             is_owner = True
         if workbook.workbook_id in current_user["fav_workbook_id"]:
             is_fav = True
-        return {"workbook":workbook, "isOwner": is_owner, "isFav": is_fav, "message":"해당하는 문제집을 성공적으로 불러왔습니다"}
+        return {"workbook": workbook, "isOwner": is_owner, "isFav": is_fav, "message": "해당하는 문제집을 성공적으로 불러왔습니다"}
     else:
-        return {"message":"해당 문제집을 불러오는 과정에서 에러가 발생하였습니다"}
+        return {"message": "해당 문제집을 불러오는 과정에서 에러가 발생하였습니다"}
 
 
 @router.post('/{workbook_id}/like', tags=['workbook'])
@@ -60,7 +54,8 @@ def add_comment(workbook_id: int, comment: str, current_user: UserInDB = Depends
     if workbook:
         list_of_comm = workbook.comments
         print(comment)
-        comment = Comments(content=comment, writer=current_user["useremail"], writer_nickname=current_user["username"], created_at=datetime.now())
+        comment = Comments(content=comment, writer=current_user["useremail"], writer_nickname=current_user["username"],
+                           created_at=datetime.now())
         list_of_comm.append(comment)
         workbook.comments = list_of_comm
 
