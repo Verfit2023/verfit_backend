@@ -84,32 +84,46 @@ def create_new_workbook(
 @router.post('/question', tags=['generation'])
 def make_question_and_answer(problemType: int, text: Text):
     client = OpenAI()
-
-    try:
-        if problemType == 1:
-            response = client.completions.create(
-                model="ft:babbage-002:verfit::8PV5wQQV",
-                prompt="role: user, content: Lecture Content: [" + text.text + "] Problem Type: True or False"
-            )
-        elif problemType == 2:
-            response = client.completions.create(
-                model="ft:babbage-002:verfit::8PV5wQQV",
-                prompt="role: user, content: Lecture Content: [" + text.text + "] Problem Type: Fill in the Blank"
-            )
-        elif problemType == 3:
-            response = client.completions.create(
-                model="ft:babbage-002:verfit::8PV5wQQV",
-                prompt="role: user, content: Lecture Content: [" + text.text + "] Problem Type: Short Answer"
-            )
-        else:
-            response = client.completions.create(
-                model="ft:babbage-002:verfit::8PV5wQQV",
-                prompt="role: user, content: Lecture Content: [" + text.text + "] Problem Type: Essay"
-            )
-
-        return {"content": response.choices[0].text, "message": "문제가 생성되었습니다"}
-    except Exception as e:
-        return {"message": f"문제 생성 과정에서 오류가 발생하였습니다: {str(e)}"}
+    problem = []
+    for i in range(10):
+        try:
+            if problemType == 1:
+                response = client.chat.completions.create(
+                    model="ft:babbage-002:verfit::8PV5wQQV",
+                    messages=[
+                        {"role": "user", "content": "Lecture Content: [" + text.text + "] Problem Type: True or False"},
+                    ]
+                )
+            elif problemType == 2:
+                response = client.chat.completions.create(
+                    model="ft:gpt-3.5-turbo-0613:verfit::8SOHNaBg",
+                    messages=[
+                        {"role": "user",
+                         "content": "Please generate fill-in-the-blank question('Question:'), answer('Answer:'), and explanation('Explanation:') based on the lecture content provided below. Make sure the problem includes a blank, which will be the position for answer."},
+                        {"role": "user", "content": text.text}
+                    ],
+                    temperature=0,
+                )
+            elif problemType == 3:
+                response = client.chat.completions.create(
+                    model="ft:gpt-3.5-turbo-1106:verfit::8SIKFWCb",
+                    messages=[
+                        {"role": "user",
+                         "content": "Please generate Short answer question, answer, explanation based on the leuctre content provided below: " + text.text},
+                    ]
+                )
+            else:
+                response = client.chat.completions.create(
+                    model="ft:babbage-002:verfit::8PV5wQQV",
+                    messages=[
+                        {"role": "user",
+                         "content": "Lecture Content: [" + text.text + "] Problem Type: Essay"},
+                    ]
+                )
+            problem.append(response.choices[0].message.content)
+        except Exception as e:
+            return {"message": f"문제 생성 과정에서 오류가 발생하였습니다: {str(e)}"}
+    return {"content": problem, "message": "문제가 생성되었습니다"}
 
 
 @router.post('/question/save', tags=['generation'])
@@ -136,7 +150,7 @@ def make_summary(text: Text):
 
     try:
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="ft:gpt-3.5-turbo-1106:verfit::8SLvA2Xx",
             messages=[
                 {"role": "user", "content": "다음 내용을 노션 개요식으로 요약 및 정리해 주세요."},
                 {"role": "user", "content": text.text}
@@ -144,7 +158,7 @@ def make_summary(text: Text):
         )
         return {"content": response.choices[0].message.content, "message": "요약본이 정상적으로 생성되었습니다."}
     except Exception as e:
-        return {"message": "요약 과정에서 에러가 발생하였습니다."}
+        return {"message": "요약 과정에서 에러가 발생하였습니다." + str(e)}
 
 
 @router.post('/summary/save', tags=['generation'])

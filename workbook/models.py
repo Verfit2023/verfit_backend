@@ -4,14 +4,17 @@ from accounts.schemas import *
 from typing import List, Optional
 from datetime import datetime
 
+
 class Text(BaseModel):
     text: str
+
 
 class Comments(BaseModel):
     content: str = Field(..., description="댓글 내용")
     writer: str = Field(..., description="작성자")
     writer_nickname: str = Field(..., description="작성자 닉네임")
     created_at: datetime = Field(..., description="생성 날짜")
+
 
 class Workbook(BaseModel):
     workbook_id: int = Field(..., description="문제집 고유 ID")
