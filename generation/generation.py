@@ -96,20 +96,23 @@ def make_question_and_answer(problemType: int, text: Text):
                 )
             elif problemType == 2:
                 response = client.chat.completions.create(
-                    model="ft:gpt-3.5-turbo-0613:verfit::8SOHNaBg",
+                    model="ft:gpt-3.5-turbo-1106:verfit::8SOGmdfW",
                     messages=[
-                        {"role": "user",
-                         "content": "Please generate fill-in-the-blank question('Question:'), answer('Answer:'), and explanation('Explanation:') based on the lecture content provided below. Make sure the problem includes a blank, which will be the position for answer."},
+                        {"role": "system",
+                         "content": "Please generate fill-in-the-blank containing question('Question:'), answer('Answer:'), and explanation('Explanation:') based on the lecture content provided below. Make sure the problem includes a blank, which will be the position for answer."},
+                        {"role": "system", "content": "Make sure print in 'Question: , Answer: , Explanation:  'form. And Question must have blank(_____)"},
                         {"role": "user", "content": text.text}
                     ],
-                    temperature=0,
                 )
             elif problemType == 3:
                 response = client.chat.completions.create(
-                    model="ft:gpt-3.5-turbo-1106:verfit::8SIKFWCb",
+                    model="ft:gpt-3.5-turbo-1106:verfit::8SPV6APh",
                     messages=[
-                        {"role": "user",
-                         "content": "Please generate Short answer question, answer, explanation based on the leuctre content provided below: " + text.text},
+                        {"role": "system",
+                         "content": "Please generate short answer question containing question('Question:'), answer('Answer:'), and explanation('Explanation:') based on the lecture content provided below. Make sure the problem includes a blank, which will be the position for answer."},
+                        {"role": "system",
+                         "content": "Make sure print in 'Question: , Answer: , Explanation:  'form. And answer length is smaller than 6 words."},
+                        {"role": "user", "content": text.text}
                     ]
                 )
             else:

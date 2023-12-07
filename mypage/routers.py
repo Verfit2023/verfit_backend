@@ -2,11 +2,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from starlette.requests import Request
 from starlette.status import HTTP_401_UNAUTHORIZED
-from database import db
 from accounts.schemas import UserInDB
-from .crud import get_user_info, update_user_info, perform_ability_test
-from .schemas import MyPageResponse, UserInfo, AbilityTestAnswers, UserUpdate, AbilityTestResult
-from accounts.dependencies import oauth2_scheme, get_current_user, get_token_from_session
+from .crud import update_user_info, perform_ability_test
+from .schemas import MyPageResponse, AbilityTestAnswers, UserUpdate
+from accounts.dependencies import get_current_user, get_token_from_session
 from .abilityTest import questions
 from fastapi.security import OAuth2PasswordBearer
 from workbook import database
@@ -45,6 +44,7 @@ def get_my_page(current_user: UserInDB = Depends(get_current_user)):
         "fav_workbooks": fav_workbooks_without_id,
     }
 
+
 #update user-info
 @router.put("/profile", response_model=MyPageResponse)
 async def update_profile(user_update: UserUpdate, request: Request):
@@ -64,17 +64,11 @@ async def update_profile(user_update: UserUpdate, request: Request):
     )
 
 
-@router.post("/ability_test/submit") #, response_model=AbilityTestResult
-async def ability_test_submit( test_answer: AbilityTestAnswers, request: Request):
-    token = await get_token_from_session(request)
-    if not token:
-        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Not authenticated")
-    user = await get_current_user(token)
-    if not user:
-        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED)
+@router.post("/ability-test/submit", tags=['mypage'])  # response_model=AbilityTestResult
+async def ability_test_submit( test_answer: AbilityTestAnswers, current_user: UserInDB = Depends(get_current_user)):
+    test_result = await perform_ability_test(current_user['useremail'], test_answer)
+    return test_result  # AbilityTestResult(test_result)
 
-    test_result = await perform_ability_test(user['useremail'], test_answer)
-    return test_result # AbilityTestResult(test_result) #**test_result
 
 @router.get("/ability_test")
 async def get_ability_test():
