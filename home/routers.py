@@ -1,68 +1,51 @@
-from fastapi import APIRouter, HTTPException, UploadFile, Depends, HTTPException, status
-from pydantic import BaseModel
-from fastapi.responses import FileResponse
-from fastapi import FastAPI, File, UploadFile, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
-from accounts.schemas import Token, User, UserInDB
+from fastapi import APIRouter
 from dotenv import load_dotenv
 from typing import Optional
 from fastapi.security import OAuth2PasswordBearer
-from datetime import datetime, timedelta
-from accounts.dependencies import oauth2_scheme, get_current_user, get_token_from_session
 from workbook import database
-
 
 load_dotenv()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-
 router = APIRouter(
     prefix="/home",
 )
 
-def get_current_user(token: str = Depends(oauth2_scheme)):
-    user = get_token_from_session(token)
-    if not user:
-        return None
-    return user
 
 @router.get("", tags=['home'])
-def get_workbooks(limit: int, current_user: UserInDB = Depends(get_current_user)):
-    workbooks = database.get_workbooks(limit)
-    if workbooks:
-        response = {"workbooks": workbooks}
-        if current_user:
-            response["usernmae"] = current_user.nickname
-        return response
-    else:
-        return {"message": "Workbook not found"}
+def get_workbooks(
+    type: Optional[str] = None,
+    keyword: Optional[str] = None,
+):
+    workbooks = database.get_workbooks()
+    workbooks = [wb for wb in workbooks if wb["pubpriv"] == 1]
+    if type and keyword:
+        if type == "제목":
+            filtered_workbooks = [wb for wb in workbooks if keyword.lower() in wb["title"].lower()]
+        elif type == "과목":
+            filtered_workbooks = [wb for wb in workbooks if keyword.lower() in wb["subject"].lower()]
+        elif type == "설명":
+            filtered_workbooks = [wb for wb in workbooks if keyword.lower() in wb["description"].lower()]
+        else:
+            filtered_workbooks = \
+                [wb for wb in workbooks if (keyword.lower() in wb["title"].lower()) or
+                 (keyword.lower() in wb["subject"].lower()) or (keyword.lower() in wb["description"].lower())]
 
-# 문제집 검색
-@router.get("/search", tags=['home'])
-def search_workbooks(search: str):
-    workbooks = database.search_workbooks(search)
-    if workbooks:
-        return workbooks
+        if filtered_workbooks:
+            filtered_workbooks_without_id = [
+                {key: value for key, value in wb.items() if key != '_id'}
+                for wb in filtered_workbooks
+            ]
+            return {"workbooks": filtered_workbooks_without_id}
+        else:
+            return {"workbooks": [], "message": "Matching Workbooks not found", "type": type, "keyword": keyword}
     else:
-        return {"message": "Workbook not found"}
-
-# 문제집 필터
-@router.get("/search/{params}", tags=['home'])
-def filter_workbooks(Subject: Optional[str] = None, Type: Optional[int] = None, Date: Optional[str] = None):
-    workbooks = database.filter_workbooks(Subject, Type, Date)
-    if workbooks:
-        return workbooks
-    else:
-        return {"message": "Workbook not found"}
-
-'''
-@router.get("", tags=['home'])
-def get_workbook(workbook_id: int):
-
-    workbook = database.get_workbook(workbook_id)
-    if workbook:
-        return workbook
-    else:
-        return {"message": "Workbook not found"}
-'''
+        if workbooks:
+            workbooks_without_id = [
+                {key: value for key, value in wb.items() if key != '_id'}
+                for wb in workbooks
+            ]
+            return {"workbooks": workbooks_without_id}
+        else:
+            return {"workbooks": [], "message": "Workbook not found"}

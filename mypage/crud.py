@@ -19,7 +19,6 @@ async def update_user_info(useremail: str, user_update: UserUpdate):
 
 async def perform_ability_test(useremail: str, test_answers: AbilityTestAnswers):
     test_result = {category: sum(scores) for category, scores in test_answers}
-    total_score = sum(test_result.values())
-    test_result['total'] = total_score
     await db["users"].update_one({"useremail": useremail}, {"$set": {"ability_score": test_result}})
     return test_result
+
