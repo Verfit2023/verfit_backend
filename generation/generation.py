@@ -1,29 +1,26 @@
-from fastapi import APIRouter, UploadFile
-from pydantic import BaseModel
+from fastapi import APIRouter, UploadFile, Depends
 from dotenv import load_dotenv
 import PyPDF2
 from openai import OpenAI
 from workbook.database import *
 from workbook.models import *
 from accounts.schemas import *
-from accounts.crud import *
-from fastapi.responses import RedirectResponse
-from datetime import datetime
 import os
-import openai
-
-API_KEY= 'sk-**'
-os.environ["OPENAI_API_KEY"] = API_KEY
+from fastapi.security import OAuth2PasswordBearer
+from datetime import datetime
+from accounts.dependencies import get_current_user
 
 MONGODB_URL = "mongodb://localhost:27017"
 client = MongoClient(MONGODB_URL)
-db = client.Verfit  # 데이터베이스 이름 설정
+db = client.Prosumer  # 데이터베이스 이름 설정
 
 load_dotenv()
 
 router = APIRouter(
     prefix="/generation",
 )
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 @router.post('/upload-file', tags=['generation'])
@@ -37,11 +34,12 @@ def upload_lecture_file(file: UploadFile):
         text += '\n'
 
     if text == "":
-        response = {"message": "파일 업로드 과정에서 에러가 발생했습니다."}
+        response = {"text": text, "message": "파일 업로드 과정에서 에러가 발생했습니다."}
     else:
-        response = {"message": "파일이 정상적으로 업로드 되었습니다."}
+        response = {"text": text, "message": "파일이 정상적으로 업로드 되었습니다."}
 
     return response
+
 
 @router.get("/newworkbook/getdata", tags=['generation'])
 def get_data():
@@ -49,53 +47,91 @@ def get_data():
 
 
 @router.post('/newworkbook', tags=['generation'])
-def create_new_workbook(title: str, subject: str, description: str, owner: User):
-    workbook = Workbook(workbook_id=get_total_num_of_workbooks()+1, title=title, subject=subject, description=description, created_at=datetime.now(), rate=0, problems=[], summaries=[], owner_email=owner.useremail, comments=[], pubpriv=0)
+def create_new_workbook(
+    title: str,
+    subject: str,
+    description: str,
+    imgurl: str,
+    current_user: UserInDB = Depends(get_current_user)
+):
     try:
-        made_workbooks = owner.made_workbook_id
+        id = get_total_num_of_workbooks() + 1
+        workbook = Workbook(
+            workbook_id=id,
+            title=title,
+            subject=subject,
+            description=description,
+            imgurl=imgurl,
+            created_at=datetime.now(),
+            rate=0,
+            problems=[],
+            summaries=[],
+            owner_email=current_user["useremail"],
+            comments=[],
+            pubpriv=1
+        )
+        made_workbooks = current_user["made_workbook_id"]
         made_workbooks.append(workbook.workbook_id)
-        db.users.update_one({"useremail": owner.useremail}, {"$set": owner.dict()})
-        return {"message": "새로운 문제집이 정상적으로 저장되었습니다."} 
+        update_user_workbooks(current_user["useremail"], made_workbooks)
+        create_workbook(workbook)
+        return {"id": id, "message": "새로운 문제집이 정상적으로 저장되었습니다."}
     except Exception as e:
-        return {"message": f"새로운 문제집을 저장하는 과정에서 오류가 발생하였거나, 문제집이 이미 존재합니다: {str(e)}"} 
+        return {
+            "message": f"새로운 문제집을 저장하는 과정에서 오류가 발생하였거나, 문제집이 이미 존재합니다: {str(e)}"
+        }
 
 
 @router.post('/question', tags=['generation'])
 def make_question_and_answer(problemType: int, text: Text):
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-    try:
-        if problemType == 1:
-            response = openai.completions.create(
-                model="ft:babbage-002:verfit::8PV5wQQV",
-                prompt="role: user, content: Lecture Content: ["+text.text+"] Problem Type: True or False"
-                #max_tokens=7,
-                #temperature=0
-            )
-        elif problemType == 2:
-             response = openai.completions.create(
-                model="ft:babbage-002:verfit::8PV5wQQV",
-                prompt="role: user, content: Lecture Content: ["+text.text+"] Problem Type: Fill in the Blank"
-            )
-        elif problemType == 3:
-            response = openai.completions.create(
-                model="ft:babbage-002:verfit::8PV5wQQV",
-                prompt="role: user, content: Lecture Content: ["+text.text+"] Problem Type: Short Answer"
-            )
-        else:
-            response = openai.completions.create(
-                model="ft:babbage-002:verfit::8PV5wQQV",
-                prompt="role: user, content: Lecture Content: ["+text.text+"] Problem Type: Essay"
-            )
-        
-        return {"content": response.choices[0].text, "message": "문제가 생성되었습니다"}
-    except Exception as e:
-        return {"message": f"문제 생성 과정에서 오류가 발생하였습니다: {str(e)}"}
+    client = OpenAI()
+    problem = []
+    for i in range(10):
+        try:
+            if problemType == 1:
+                response = client.chat.completions.create(
+                    model="ft:babbage-002:verfit::8PV5wQQV",
+                    messages=[
+                        {"role": "user", "content": "Lecture Content: [" + text.text + "] Problem Type: True or False"},
+                    ]
+                )
+            elif problemType == 2:
+                response = client.chat.completions.create(
+                    model="ft:gpt-3.5-turbo-1106:verfit::8SOGmdfW",
+                    messages=[
+                        {"role": "system",
+                         "content": "Please generate fill-in-the-blank containing question('Question:'), answer('Answer:'), and explanation('Explanation:') based on the lecture content provided below. Make sure the problem includes a blank, which will be the position for answer."},
+                        {"role": "system", "content": "Make sure print in 'Question: , Answer: , Explanation:  'form. And Question must have blank(_____)"},
+                        {"role": "user", "content": text.text}
+                    ],
+                )
+            elif problemType == 3:
+                response = client.chat.completions.create(
+                    model="ft:gpt-3.5-turbo-1106:verfit::8SPV6APh",
+                    messages=[
+                        {"role": "system",
+                         "content": "Please generate short answer question containing question('Question:'), answer('Answer:'), and explanation('Explanation:') based on the lecture content provided below. Make sure the problem includes a blank, which will be the position for answer."},
+                        {"role": "system",
+                         "content": "Make sure print in 'Question: , Answer: , Explanation:  'form. And answer length is smaller than 6 words."},
+                        {"role": "user", "content": text.text}
+                    ]
+                )
+            else:
+                response = client.chat.completions.create(
+                    model="ft:babbage-002:verfit::8PV5wQQV",
+                    messages=[
+                        {"role": "user",
+                         "content": "Lecture Content: [" + text.text + "] Problem Type: Essay"},
+                    ]
+                )
+            problem.append(response.choices[0].message.content)
+        except Exception as e:
+            return {"message": f"문제 생성 과정에서 오류가 발생하였습니다: {str(e)}"}
+    return {"content": problem, "message": "문제가 생성되었습니다"}
 
 
 @router.post('/question/save', tags=['generation'])
-def save_question(problemType: int, problem: Text, workbook_id: int):
-
+def save_question(problem: Text, workbook_id: int):
+    problemType = 1
     workbook = get_workbook(workbook_id)
 
     if workbook:
@@ -108,15 +144,16 @@ def save_question(problemType: int, problem: Text, workbook_id: int):
         except Exception as e:
             return {"message": f"문제 저장 과정에서 오류가 발생하였습니다: {str(e)}"}
     else:
-        return RedirectResponse("/generation/newworkbook/getdata", status_code=303)
-    
+        return
+
+
 @router.post('/summary', tags=['generation'])
 def make_summary(text: Text):
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
     try:
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="ft:gpt-3.5-turbo-1106:verfit::8SLvA2Xx",
             messages=[
                 {"role": "user", "content": "다음 내용을 노션 개요식으로 요약 및 정리해 주세요."},
                 {"role": "user", "content": text.text}
@@ -124,8 +161,9 @@ def make_summary(text: Text):
         )
         return {"content": response.choices[0].message.content, "message": "요약본이 정상적으로 생성되었습니다."}
     except Exception as e:
-        return {"message": "요약 과정에서 에러가 발생하였습니다."}
-    
+        return {"message": "요약 과정에서 에러가 발생하였습니다." + str(e)}
+
+
 @router.post('/summary/save', tags=['generation'])
 def save_summary(content: Text, workbook_id: int):
 
@@ -140,5 +178,3 @@ def save_summary(content: Text, workbook_id: int):
             return {"message": "요약본이 정상적으로 저장되었습니다."}
         except:
             return {"message": "요약본 저장 과정에서 오류가 발생하였습니다."}
-    else:
-        return RedirectResponse("/generation/newworkbook/getdata", status_code=303)
